@@ -80,12 +80,12 @@ class Potencia(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 32000
-        self.Amplitud = Amplitud = 50
+        self.Amplitud = Amplitud = 5
 
         ##################################################
         # Blocks
         ##################################################
-        self._Amplitud_range = Range(0, 1000, 1, 50, 200)
+        self._Amplitud_range = Range(0, 100, 0.5, 5, 200)
         self._Amplitud_win = RangeWidget(self._Amplitud_range, self.set_Amplitud, "Amplitud", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._Amplitud_win)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
@@ -179,7 +179,7 @@ class Potencia(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
-        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_SIN_WAVE, 1000, Amplitud, 0, 0)
+        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_SAW_WAVE, 1000, Amplitud, 0, 0)
         self.Calculopotenciacomunicaciones_0 = Calculopotenciacomunicaciones(
             I_Vect=1024,
         )
