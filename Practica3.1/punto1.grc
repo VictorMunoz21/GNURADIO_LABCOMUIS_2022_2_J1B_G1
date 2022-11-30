@@ -168,11 +168,11 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [208, 20.0]
+    coordinate: [128, 180.0]
     rotation: 0
     state: enabled
-- name: EnvolventeComplejaDsB_0
-  id: EnvolventeComplejaDsB
+- name: EnvolventeComplejaJ1BG1_0
+  id: EnvolventeComplejaJ1BG1
   parameters:
     Ac: Ac
     affinity: ''
@@ -185,7 +185,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [432, 436.0]
+    coordinate: [472, 420.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_0
@@ -207,7 +207,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [160, 404.0]
+    coordinate: [88, 380.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
@@ -667,10 +667,10 @@ blocks:
     state: true
 
 connections:
-- [EnvolventeComplejaDsB_0, '0', qtgui_freq_sink_x_0, '0']
-- [EnvolventeComplejaDsB_0, '0', qtgui_time_sink_x_0, '0']
-- [EnvolventeComplejaDsB_0, '0', uhd_usrp_sink_0, '0']
-- [analog_sig_source_x_0, '0', EnvolventeComplejaDsB_0, '0']
+- [EnvolventeComplejaJ1BG1_0, '0', qtgui_freq_sink_x_0, '0']
+- [EnvolventeComplejaJ1BG1_0, '0', qtgui_time_sink_x_0, '0']
+- [EnvolventeComplejaJ1BG1_0, '0', uhd_usrp_sink_0, '0']
+- [analog_sig_source_x_0, '0', EnvolventeComplejaJ1BG1_0, '0']
 
 metadata:
   file_format: 1

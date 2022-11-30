@@ -26,7 +26,7 @@ import os
 import sys
 sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
 
-from EnvolventeComplejaDsB import EnvolventeComplejaDsB  # grc-generated hier_block
+from EnvolventeComplejaJ1BG1 import EnvolventeComplejaJ1BG1  # grc-generated hier_block
 from PyQt5 import Qt
 from gnuradio import qtgui
 from gnuradio.filter import firdes
@@ -221,7 +221,7 @@ class punto1(gr.top_block, Qt.QWidget):
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
         self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, Fm, Am, 0, 0)
-        self.EnvolventeComplejaDsB_0 = EnvolventeComplejaDsB(
+        self.EnvolventeComplejaJ1BG1_0 = EnvolventeComplejaJ1BG1(
             Ac=Ac,
             ka=Ka,
         )
@@ -230,10 +230,10 @@ class punto1(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.EnvolventeComplejaDsB_0, 0), (self.qtgui_freq_sink_x_0, 0))
-        self.connect((self.EnvolventeComplejaDsB_0, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.EnvolventeComplejaDsB_0, 0), (self.uhd_usrp_sink_0, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.EnvolventeComplejaDsB_0, 0))
+        self.connect((self.EnvolventeComplejaJ1BG1_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.EnvolventeComplejaJ1BG1_0, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.EnvolventeComplejaJ1BG1_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.EnvolventeComplejaJ1BG1_0, 0))
 
 
     def closeEvent(self, event):
@@ -259,7 +259,7 @@ class punto1(gr.top_block, Qt.QWidget):
 
     def set_Ka(self, Ka):
         self.Ka = Ka
-        self.EnvolventeComplejaDsB_0.set_ka(self.Ka)
+        self.EnvolventeComplejaJ1BG1_0.set_ka(self.Ka)
 
     def get_GTX(self):
         return self.GTX
@@ -294,7 +294,7 @@ class punto1(gr.top_block, Qt.QWidget):
 
     def set_Ac(self, Ac):
         self.Ac = Ac
-        self.EnvolventeComplejaDsB_0.set_Ac(self.Ac)
+        self.EnvolventeComplejaJ1BG1_0.set_Ac(self.Ac)
 
 
 
