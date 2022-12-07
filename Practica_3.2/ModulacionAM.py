@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+#
+# SPDX-License-Identifier: GPL-3.0
+#
+# GNU Radio Python Flow Graph
+# Title: Modulador de amplitud
+# Author: UIS
+# Copyright: UIS
+# GNU Radio version: 3.9.5.0
+
+from distutils.version import StrictVersion
+
+if __name__ == '__main__':
+    import ctypes
+    import sys
+    if sys.platform.startswith('linux'):
+        try:
+            x11 = ctypes.cdll.LoadLibrary('libX11.so')
+            x11.XInitThreads()
+        except:
+            print("Warning: failed to XInitThreads()")
+
+import os
+import sys
+sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
+
+from SSB import SSB  # grc-generated hier_block
+from gnuradio import analog
+from gnuradio import gr
+from gnuradio.filter import firdes
+from gnuradio.fft import window
+import signal
+from PyQt5 import Qt
+from argparse import ArgumentParser
+from gnuradio.eng_arg import eng_float, intx
+from gnuradio import eng_notation
+from gnuradio import uhd
+import time
+from gnuradio.qtgui import Range, RangeWidget
+from PyQt5 import QtCore
+
+
+
+from gnuradio import qtgui
+
+class ModulacionAM(gr.top_block, Qt.QWidget):
+
+    def __init__(self):
+        gr.top_block.__init__(self, "Modulador de amplitud", catch_exceptions=True)
+        Qt.QWidget.__init__(self)
+        self.setWindowTitle("Modulador de amplitud")
+        qtgui.util.check_set_qss()
+        try:
+            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
+        except:
+            pass
+        self.top_scroll_layout = Qt.QVBoxLayout()
+        self.setLayout(self.top_scroll_layout)
+        self.top_scroll = Qt.QScrollArea()
+        self.top_scroll.setFrameStyle(Qt.QFrame.NoFrame)
+        self.top_scroll_layout.addWidget(self.top_scroll)
+        self.top_scroll.setWidgetResizable(True)
+        self.top_widget = Qt.QWidget()
+        self.top_scroll.setWidget(self.top_widget)
+        self.top_layout = Qt.QVBoxLayout(self.top_widget)
+        self.top_grid_layout = Qt.QGridLayout()
+        self.top_layout.addLayout(self.top_grid_layout)
+
+        self.settings = Qt.QSettings("GNU Radio", "ModulacionAM")
+
+        try:
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
+        except:
+            pass
+
+        ##################################################
+        # Variables
+        ##################################################
+        self.samp_rate = samp_rate = 12500000/64
+        self.fm = fm = 1000
+        self.fc = fc = 50e6
+        self.K = K = 1
+        self.GTX = GTX = 0
+        self.B = B = 1
+        self.Am = Am = 1
+        self.Ac = Ac = 125e-3
+
+        ##################################################
+        # Blocks
+        ##################################################
+        self._fm_range = Range(300, 21000, 100, 1000, 200)
+        self._fm_win = RangeWidget(self._fm_range, self.set_fm, "frecuencia mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._fm_win)
+        self._fc_range = Range(50e6, 2.2e9, 1e6, 50e6, 200)
+        self._fc_win = RangeWidget(self._fc_range, self.set_fc, "Frecuencia Portadora", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._fc_win)
+        self._K_range = Range(0, 1, 1, 1, 200)
+        self._K_win = RangeWidget(self._K_range, self.set_K, "A1", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._K_win)
+        self._GTX_range = Range(0, 30, 1, 0, 200)
+        self._GTX_win = RangeWidget(self._GTX_range, self.set_GTX, "Ganancia del transmisor", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._GTX_win)
+        self._B_range = Range(-1, 1, 2, 1, 200)
+        self._B_win = RangeWidget(self._B_range, self.set_B, "Cambio de banda ", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._B_win)
+        self._Am_range = Range(0, 4, 100e-3, 1, 200)
+        self._Am_win = RangeWidget(self._Am_range, self.set_Am, "Amplitud mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._Am_win)
+        self._Ac_range = Range(0, 1, 1e-3, 125e-3, 200)
+        self._Ac_win = RangeWidget(self._Ac_range, self.set_Ac, "Amplitud portadora", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._Ac_win)
+        self.uhd_usrp_sink_0 = uhd.usrp_sink(
+            ",".join(("", '')),
+            uhd.stream_args(
+                cpu_format="fc32",
+                args='',
+                channels=list(range(0,1)),
+            ),
+            "",
+        )
+        self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
+        self.uhd_usrp_sink_0.set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
+
+        self.uhd_usrp_sink_0.set_center_freq(fc, 0)
+        self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
+        self.uhd_usrp_sink_0.set_gain(GTX, 0)
+        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
+        self.SSB_0 = SSB(
+            Ac=Ac,
+            B=B,
+            K=K,
+        )
+
+
+        ##################################################
+        # Connections
+        ##################################################
+        self.connect((self.SSB_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.SSB_0, 0))
+
+
+    def closeEvent(self, event):
+        self.settings = Qt.QSettings("GNU Radio", "ModulacionAM")
+        self.settings.setValue("geometry", self.saveGeometry())
+        self.stop()
+        self.wait()
+
+        event.accept()
+
+    def get_samp_rate(self):
+        return self.samp_rate
+
+    def set_samp_rate(self, samp_rate):
+        self.samp_rate = samp_rate
+        self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
+        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
+
+    def get_fm(self):
+        return self.fm
+
+    def set_fm(self, fm):
+        self.fm = fm
+        self.analog_sig_source_x_0.set_frequency(self.fm)
+
+    def get_fc(self):
+        return self.fc
+
+    def set_fc(self, fc):
+        self.fc = fc
+        self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
+
+    def get_K(self):
+        return self.K
+
+    def set_K(self, K):
+        self.K = K
+        self.SSB_0.set_K(self.K)
+
+    def get_GTX(self):
+        return self.GTX
+
+    def set_GTX(self, GTX):
+        self.GTX = GTX
+        self.uhd_usrp_sink_0.set_gain(self.GTX, 0)
+
+    def get_B(self):
+        return self.B
+
+    def set_B(self, B):
+        self.B = B
+        self.SSB_0.set_B(self.B)
+
+    def get_Am(self):
+        return self.Am
+
+    def set_Am(self, Am):
+        self.Am = Am
+        self.analog_sig_source_x_0.set_amplitude(self.Am)
+
+    def get_Ac(self):
+        return self.Ac
+
+    def set_Ac(self, Ac):
+        self.Ac = Ac
+        self.SSB_0.set_Ac(self.Ac)
+
+
+
+
+def main(top_block_cls=ModulacionAM, options=None):
+
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
+    qapp = Qt.QApplication(sys.argv)
+
+    tb = top_block_cls()
+
+    tb.start()
+
+    tb.show()
+
+    def sig_handler(sig=None, frame=None):
+        tb.stop()
+        tb.wait()
+
+        Qt.QApplication.quit()
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    timer = Qt.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
+
+    qapp.exec_()
+
+if __name__ == '__main__':
+    main()
