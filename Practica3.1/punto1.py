@@ -220,7 +220,7 @@ class punto1(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
-        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, Fm, Am, 0, 0)
+        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_SQR_WAVE, Fm, Am, 0, 0)
         self.EnvolventeComplejaJ1BG1_0 = EnvolventeComplejaJ1BG1(
             Ac=Ac,
             ka=Ka,

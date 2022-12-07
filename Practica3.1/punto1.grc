@@ -202,7 +202,7 @@ blocks:
     phase: '0'
     samp_rate: samp_rate
     type: float
-    waveform: analog.GR_COS_WAVE
+    waveform: analog.GR_SQR_WAVE
   states:
     bus_sink: false
     bus_source: false
