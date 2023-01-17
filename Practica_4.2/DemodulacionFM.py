@@ -27,7 +27,6 @@ from gnuradio.filter import firdes
 import sip
 from gnuradio import analog
 from gnuradio import audio
-from gnuradio import blocks
 from gnuradio import filter
 from gnuradio import gr
 from gnuradio.fft import window
@@ -81,19 +80,20 @@ class DemodulacionFM(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 10e6
-        self.fc = fc = 88.1e6
-        self.Ga = Ga = 1
+        self.samp_rate = samp_rate = 12.5e6
+        self.fc = fc = 90.7e6
+        self.GRX = GRX = 0
+        self.D = D = 50
 
         ##################################################
         # Blocks
         ##################################################
-        self._fc_range = Range(88e6, 108e6, 100e3, 88.1e6, 200)
+        self._fc_range = Range(88e6, 108e6, 100e3, 90.7e6, 200)
         self._fc_win = RangeWidget(self._fc_range, self.set_fc, "FrecueciaPortadora_fc", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._fc_win)
-        self._Ga_range = Range(0, 3, 100e-3, 1, 200)
-        self._Ga_win = RangeWidget(self._Ga_range, self.set_Ga, "Amplitud audio", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._Ga_win)
+        self._GRX_range = Range(0, 30, 1, 0, 200)
+        self._GRX_win = RangeWidget(self._GRX_range, self.set_GRX, "Ganancia del Receptor", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._GRX_win)
         self.uhd_usrp_source_0 = uhd.usrp_source(
             ",".join(("", '')),
             uhd.stream_args(
@@ -106,32 +106,27 @@ class DemodulacionFM(gr.top_block, Qt.QWidget):
         self.uhd_usrp_source_0.set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
 
         self.uhd_usrp_source_0.set_center_freq(fc, 0)
-        self.uhd_usrp_source_0.set_antenna("RX2", 0)
-        self.uhd_usrp_source_0.set_gain(0, 0)
+        self.uhd_usrp_source_0.set_antenna("TX/RX", 0)
+        self.uhd_usrp_source_0.set_gain(GRX, 0)
         self.rational_resampler_xxx_1 = filter.rational_resampler_fff(
                 interpolation=44100,
-                decimation=200000,
-                taps=[],
-                fractional_bw=0)
-        self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
-                interpolation=1,
-                decimation=50,
+                decimation=int(samp_rate/D),
                 taps=[],
                 fractional_bw=0)
         self.qtgui_freq_sink_x_1 = qtgui.freq_sink_f(
             16000, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
-            200000, #bw
+            samp_rate/D, #bw
             "", #name
-            1,
+            2,
             None # parent
         )
         self.qtgui_freq_sink_x_1.set_update_time(0.10)
         self.qtgui_freq_sink_x_1.set_y_axis(-140, 10)
         self.qtgui_freq_sink_x_1.set_y_label('Relative Gain', 'dB')
         self.qtgui_freq_sink_x_1.set_trigger_mode(qtgui.TRIG_MODE_FREE, 0.0, 0, "")
-        self.qtgui_freq_sink_x_1.enable_autoscale(False)
+        self.qtgui_freq_sink_x_1.enable_autoscale(True)
         self.qtgui_freq_sink_x_1.enable_grid(False)
         self.qtgui_freq_sink_x_1.set_fft_average(1.0)
         self.qtgui_freq_sink_x_1.enable_axis_labels(True)
@@ -150,7 +145,7 @@ class DemodulacionFM(gr.top_block, Qt.QWidget):
         alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
             1.0, 1.0, 1.0, 1.0, 1.0]
 
-        for i in range(1):
+        for i in range(2):
             if len(labels[i]) == 0:
                 self.qtgui_freq_sink_x_1.set_line_label(i, "Data {0}".format(i))
             else:
@@ -204,35 +199,33 @@ class DemodulacionFM(gr.top_block, Qt.QWidget):
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
         self.low_pass_filter_0 = filter.fir_filter_ccf(
-            1,
+            int(D),
             firdes.low_pass(
                 1,
-                200000,
+                samp_rate,
                 100000,
                 10000,
                 window.WIN_HAMMING,
                 6.76))
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(Ga)
         self.audio_sink_0 = audio.sink(44100, '', True)
         self.analog_wfm_rcv_0 = analog.wfm_rcv(
-        	quad_rate=200000,
+        	quad_rate=samp_rate/D,
         	audio_decimation=1,
         )
-        self.analog_fm_preemph_0 = analog.fm_preemph(fs=int(samp_rate/50), tau=75e-6, fh=-1.0)
+        self.analog_fm_preemph_0 = analog.fm_preemph(fs=samp_rate/50, tau=75e-6, fh=-1.0)
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_fm_preemph_0, 0), (self.qtgui_freq_sink_x_1, 0))
+        self.connect((self.analog_fm_preemph_0, 0), (self.qtgui_freq_sink_x_1, 1))
+        self.connect((self.analog_fm_preemph_0, 0), (self.rational_resampler_xxx_1, 0))
         self.connect((self.analog_wfm_rcv_0, 0), (self.analog_fm_preemph_0, 0))
-        self.connect((self.analog_wfm_rcv_0, 0), (self.blocks_multiply_const_vxx_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.rational_resampler_xxx_1, 0))
+        self.connect((self.analog_wfm_rcv_0, 0), (self.qtgui_freq_sink_x_1, 0))
         self.connect((self.low_pass_filter_0, 0), (self.analog_wfm_rcv_0, 0))
-        self.connect((self.rational_resampler_xxx_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.rational_resampler_xxx_1, 0), (self.audio_sink_0, 0))
+        self.connect((self.uhd_usrp_source_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.uhd_usrp_source_0, 0), (self.qtgui_freq_sink_x_0, 0))
-        self.connect((self.uhd_usrp_source_0, 0), (self.rational_resampler_xxx_0, 0))
 
 
     def closeEvent(self, event):
@@ -248,7 +241,9 @@ class DemodulacionFM(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, 100000, 10000, window.WIN_HAMMING, 6.76))
         self.qtgui_freq_sink_x_0.set_frequency_range(self.fc, self.samp_rate)
+        self.qtgui_freq_sink_x_1.set_frequency_range(0, self.samp_rate/self.D)
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
 
     def get_fc(self):
@@ -259,12 +254,19 @@ class DemodulacionFM(gr.top_block, Qt.QWidget):
         self.qtgui_freq_sink_x_0.set_frequency_range(self.fc, self.samp_rate)
         self.uhd_usrp_source_0.set_center_freq(self.fc, 0)
 
-    def get_Ga(self):
-        return self.Ga
+    def get_GRX(self):
+        return self.GRX
 
-    def set_Ga(self, Ga):
-        self.Ga = Ga
-        self.blocks_multiply_const_vxx_0.set_k(self.Ga)
+    def set_GRX(self, GRX):
+        self.GRX = GRX
+        self.uhd_usrp_source_0.set_gain(self.GRX, 0)
+
+    def get_D(self):
+        return self.D
+
+    def set_D(self, D):
+        self.D = D
+        self.qtgui_freq_sink_x_1.set_frequency_range(0, self.samp_rate/self.D)
 
 
 
